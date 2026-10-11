@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<robot name="Excavator_Final" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:include filename="$(find Excavator_Final_description)/urdf/materials.xacro" />
+<xacro:include filename="$(find Excavator_Final_description)/urdf/Excavator_Final.trans" />
+<xacro:include filename="$(find Excavator_Final_description)/urdf/Excavator_Final.gazebo" />
+<link name="base_link">
+  <inertial>
+    <origin xyz="1.29758643600452e-17 0.03749999999999992 -0.0017508382705885017" rpy="0 0 0"/>
+    <mass value="7.569856239706723"/>
+    <inertia ixx="0.030083" iyy="0.030083" izz="0.053337" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="base_joint_1">
+  <inertial>
+    <origin xyz="-7.514767958333316e-18 -2.8449465006019636e-16 0.041838748823312344" rpy="0 0 0"/>
+    <mass value="1.633873266880975"/>
+    <inertia ixx="0.002407" iyy="0.002928" izz="0.002414" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.0 -0.0375 -0.0125" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.0 -0.0375 -0.0125" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="arm_1">
+  <inertial>
+    <origin xyz="0.02999999999999998 -0.17691084988622066 0.1071835996152112" rpy="0 0 0"/>
+    <mass value="3.925170481139749"/>
+    <inertia ixx="0.069957" iyy="0.015504" izz="0.056987" ixy="-0.0" iyz="0.024855" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.03 -0.0375 -0.107186" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0.03 -0.0375 -0.107186" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<joint name="Revolute 1" type="revolute">
+  <origin xyz="0.0 0.0375 0.0125" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="base_joint_1"/>
+  <axis xyz="0.0 -0.0 1.0"/>
+  <limit upper="3.141593" lower="0.0" effort="100" velocity="100"/>
+</joint>
+
+<joint name="Revolute 2" type="revolute">
+  <origin xyz="-0.03 0.0 0.094686" rpy="0 0 0"/>
+  <parent link="base_joint_1"/>
+  <child link="arm_1"/>
+  <axis xyz="-1.0 0.0 0.0"/>
+  <limit upper="0.959931" lower="0.0" effort="100" velocity="100"/>
+</joint>
+
+</robot>
