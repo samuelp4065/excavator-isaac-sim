@@ -13,6 +13,7 @@ previous working version keeps running until you save a fixed one.
     ctx.idx[name]      DOF index of a joint, e.g. ctx.idx["arm_joint"]
     ctx.held           set of carb.input.KeyboardInput currently held down
     ctx.excavator      the SingleArticulation, for anything else
+    ctx.rocks          the RockSet: .reset(), .positions(), .count
 """
 import carb.input
 import numpy as np
@@ -31,9 +32,10 @@ JOINT_KEYS = {
     "swing_joint":  (K.LEFT,  K.RIGHT, -np.pi, np.pi),
     "arm_joint":    (K.Q,     K.A,     -np.pi, np.pi),
     "pole_joint":   (K.W,     K.S,     -np.pi, np.pi),
-    "bucket_joint": (K.E,     K.D,     -np.pi, np.pi),
+    "bucket_joint": (K.E,     K.D,     -4.0,   np.pi),  # digging needs ~ -3.7
 }
 RESET_KEY = K.R
+ROCKS_RESET_KEY = K.T
 SPEED = 0.5  # rad/s while a key is held (~29 deg/s)
 
 # Used when MODE == "sweep": each joint goes lo -> hi -> lo at freq (rad/s).
@@ -64,6 +66,9 @@ def step(ctx):
 
 def keyboard(ctx):
     moved = False
+    if ROCKS_RESET_KEY in ctx.held:
+        ctx.held.discard(ROCKS_RESET_KEY)  # once per press, not every step
+        ctx.rocks.reset()
     if RESET_KEY in ctx.held:
         ctx.targets[:] = 0.0
         moved = True

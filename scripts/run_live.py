@@ -1,19 +1,23 @@
-"""Start Isaac Sim once and hot-reload scripts/live_controller.py on every save.
+"""Start Isaac Sim once and hot-reload the controller and the rock scene on save.
 
 Run with:
     ~/isaacsim/python.sh scripts/run_live.py
 
-Then edit live_controller.py and save; changes apply within ~0.5 s, no restart.
-Only changes to *this* file (scene setup) need a restart.
+Then, while it runs:
+- save live_controller.py -> control logic reloads within ~0.5 s;
+- save rocks.py -> rocks and dump bin are rebuilt and the pile re-poured
+  (a second or two), the excavator keeps its pose.
+Only changes to *this* file or a re-imported robot USD need a restart.
 Click inside the viewport first so keyboard input reaches the sim.
 """
 from isaacsim import SimulationApp
 
 simulation_app = SimulationApp({"headless": False})
 
-import importlib.util
 import os
+import sys
 import traceback
+import types
 from types import SimpleNamespace
 
 import carb.input
@@ -25,7 +29,9 @@ from isaacsim.core.utils.stage import add_reference_to_stage
 from isaacsim.core.utils.types import ArticulationAction
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
 CONTROLLER_PATH = os.path.join(SCRIPT_DIR, "live_controller.py")
+ROCKS_PATH = os.path.join(SCRIPT_DIR, "rocks.py")
 USD_PATH = os.path.join(
     SCRIPT_DIR, "..", "Excavator_Final_description", "urdf", "Excavator_Final", "Excavator_Final.usd",
 )
@@ -41,7 +47,11 @@ if not os.path.isfile(USD_PATH):
     )
 
 world = World(stage_units_in_meters=1.0)
-world.scene.add_default_ground_plane()
+# A handful of bodies runs fastest on the CPU solver (GPU dynamics only pays off
+# with thousands). Fabric keeps physics results out of USD, so updates are cheap.
+world.get_physics_context().enable_fabric(True)
+
+world.scene.add_default_ground_plane(static_friction=0.8, dynamic_friction=0.7)
 add_reference_to_stage(usd_path=USD_PATH, prim_path=PRIM_PATH)
 
 excavator = world.scene.add(SingleArticulation(prim_path=PRIM_PATH, name="excavator"))
@@ -67,20 +77,76 @@ keyboard = omni.appwindow.get_default_app_window().get_keyboard()
 keyboard_sub = input_iface.subscribe_to_keyboard_events(keyboard, on_keyboard_event)
 
 
-def load_controller():
-    """Import live_controller.py fresh; returns None (and prints why) on error."""
-    spec = importlib.util.spec_from_file_location("live_controller", CONTROLLER_PATH)
-    module = importlib.util.module_from_spec(spec)
+def load_module(path, name):
+    """Run a file fresh (picking up edits); returns None (and prints why) on error.
+
+    Compiles the source directly instead of importing: Isaac Sim's Python can keep
+    serving the stale cached bytecode from startup, silently ignoring edits."""
+    module = types.ModuleType(name)
+    module.__file__ = path
     try:
-        spec.loader.exec_module(module)
-        controller.set_gains(
-            kps=np.full(excavator.num_dof, float(getattr(module, "KP", 1e4))),
-            kds=np.full(excavator.num_dof, float(getattr(module, "KD", 1e3))),
-        )
+        with open(path) as f:
+            code = compile(f.read(), path, "exec")
+        exec(code, module.__dict__)
     except Exception:
         traceback.print_exc()
         return None
     return module
+
+
+def apply_gains(mod):
+    controller.set_gains(
+        kps=np.full(excavator.num_dof, float(getattr(mod, "KP", 1e4))),
+        kds=np.full(excavator.num_dof, float(getattr(mod, "KD", 1e3))),
+    )
+
+
+def load_controller():
+    new = load_module(CONTROLLER_PATH, "live_controller")
+    if new is None:
+        return None
+    try:
+        apply_gains(new)
+    except Exception:
+        traceback.print_exc()
+        return None
+    return new
+
+
+def hold_pose():
+    excavator.apply_action(ArticulationAction(joint_positions=ctx.targets))
+
+
+def rebuild_rocks():
+    """(Re)build the rock scene from rocks.py without restarting Isaac Sim."""
+    new = load_module(ROCKS_PATH, "rocks")
+    if new is None:
+        print("rocks.py failed to load; keeping the current rocks.")
+        return
+    # Physics views must be rebuilt after rigid bodies are added or removed, so
+    # stop, swap the prims, and start again with the excavator in the same pose.
+    world.stop()
+    for root in {getattr(ctx.rocks_module, "ROOT", None), new.ROOT} - {None}:
+        if world.stage.GetPrimAtPath(root):
+            world.stage.RemovePrim(root)
+    try:
+        rocks = new.RockSet(world.stage)
+    except Exception:
+        traceback.print_exc()
+        rocks = None
+        print("Building rocks failed; fix rocks.py and save again.")
+    world.reset()
+    excavator.set_joint_positions(ctx.targets)
+    excavator.set_joint_velocities(np.zeros(excavator.num_dof))
+    if module:
+        apply_gains(module)
+    if rocks:
+        try:
+            rocks.initialize()
+            rocks.settle(world, before_step=hold_pose)
+        except Exception:
+            traceback.print_exc()
+    ctx.rocks, ctx.rocks_module = rocks, new
 
 
 # State that survives reloads, so the robot doesn't jump when you save.
@@ -93,12 +159,25 @@ ctx = SimpleNamespace(
     idx={name: i for i, name in enumerate(excavator.dof_names)},
     held=held,
     excavator=excavator,
+    rocks=None,
+    rocks_module=None,
 )
 
 module = load_controller()
-mtime = os.path.getmtime(CONTROLLER_PATH)
 print(f"Loaded {CONTROLLER_PATH}" if module else "Controller failed to load; fix and save.")
+rebuild_rocks()
 step_failed = False
+
+
+def mtime_of(path, last):
+    try:
+        return os.path.getmtime(path)
+    except OSError:  # editors may briefly remove the file while saving
+        return last
+
+
+mtime = mtime_of(CONTROLLER_PATH, 0)
+rocks_mtime = mtime_of(ROCKS_PATH, 0)
 
 while simulation_app.is_running():
     world.step(render=True)
@@ -109,10 +188,12 @@ while simulation_app.is_running():
     ctx.t += ctx.dt
 
     if ctx.step % RELOAD_CHECK_EVERY == 0:
-        try:
-            new_mtime = os.path.getmtime(CONTROLLER_PATH)
-        except OSError:  # editors may briefly remove the file while saving
-            new_mtime = mtime
+        new_mtime = mtime_of(ROCKS_PATH, rocks_mtime)
+        if new_mtime != rocks_mtime:
+            rocks_mtime = new_mtime
+            print("rocks.py changed; rebuilding rocks...")
+            rebuild_rocks()
+        new_mtime = mtime_of(CONTROLLER_PATH, mtime)
         if new_mtime != mtime:
             mtime = new_mtime
             new_module = load_controller()

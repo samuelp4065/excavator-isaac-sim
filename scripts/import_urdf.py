@@ -32,6 +32,9 @@ config.set_up_vector(0, 0, 1)
 config.set_make_default_prim(True)
 config.set_create_physics_scene(True)
 config.set_collision_from_visuals(False)
+# Split each link into several convex pieces instead of one shrink-wrapped hull,
+# so the bucket stays hollow and can actually hold sand.
+config.set_convex_decomp(True)
 
 result, prim_path = omni.kit.commands.execute(
     "URDFParseAndImportFile", urdf_path=URDF_PATH, import_config=config, dest_path=USD_PATH
