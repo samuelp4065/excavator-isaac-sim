@@ -6,9 +6,9 @@
 <xacro:include filename="$(find Excavator_Final_description)/urdf/Excavator_Final.gazebo" />
 <link name="base_link">
   <inertial>
-    <origin xyz="1.29758643600452e-17 0.03749999999999992 -0.0017508382705885017" rpy="0 0 0"/>
+    <origin xyz="1.29758643600452e-17 0.037499999999999804 -0.0017508382705885572" rpy="0 0 0"/>
     <mass value="7.569856239706723"/>
-    <inertia ixx="0.030083" iyy="0.030083" izz="0.053337" ixy="-0.0" iyz="-0.0" ixz="0.0"/>
+    <inertia ixx="0.030083" iyy="0.030083" izz="0.053337" ixy="0.0" iyz="-0.0" ixz="0.0"/>
   </inertial>
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -25,62 +25,116 @@
   </collision>
 </link>
 
-<link name="base_joint_1">
+<link name="base_joint_1_1">
   <inertial>
-    <origin xyz="-7.514767958333316e-18 -2.8449465006019636e-16 0.041838748823312344" rpy="0 0 0"/>
-    <mass value="1.633873266880975"/>
-    <inertia ixx="0.002407" iyy="0.002928" izz="0.002414" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+    <origin xyz="1.2212453270876722e-17 -2.8449465006019636e-16 0.04183874882331236" rpy="0 0 0"/>
+    <mass value="1.6338732668809755"/>
+    <inertia ixx="0.002419" iyy="0.002916" izz="0.002414" ixy="-7.8e-05" iyz="0.0" ixz="-0.0"/>
   </inertial>
   <visual>
     <origin xyz="-0.0 -0.0375 -0.0125" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="-0.0 -0.0375 -0.0125" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/base_joint_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
 
-<link name="arm_1">
+<link name="arm_1_1">
   <inertial>
-    <origin xyz="0.02999999999999998 -0.17691084988622066 0.1071835996152112" rpy="0 0 0"/>
+    <origin xyz="0.055942570864331395 -0.16748382923114594 0.11182731392787187" rpy="0 0 0"/>
     <mass value="3.925170481139749"/>
-    <inertia ixx="0.069957" iyy="0.015504" izz="0.056987" ixy="-0.0" iyz="0.024855" ixz="0.0"/>
+    <inertia ixx="0.068745" iyy="0.01806" izz="0.055643" ixy="0.007931" iyz="0.02562" ixz="-0.003915"/>
   </inertial>
   <visual>
-    <origin xyz="0.03 -0.0375 -0.107186" rpy="0 0 0"/>
+    <origin xyz="0.029656 -0.032968 -0.107186" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
-    <origin xyz="0.03 -0.0375 -0.107186" rpy="0 0 0"/>
+    <origin xyz="0.029656 -0.032968 -0.107186" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/arm_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
 
-<joint name="Revolute 1" type="revolute">
+<link name="Pole_1">
+  <inertial>
+    <origin xyz="0.032426 -0.099650 -0.053902" rpy="0 0 0"/>
+    <mass value="2.0830208694389847"/>
+    <inertia ixx="0.008911" iyy="0.001597" izz="0.008065" ixy="0.001144" iyz="0.002721" ixz="-0.000416"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.038947 0.329902 -0.358200" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/Pole_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.038947 0.329902 -0.358200" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/Pole_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Bucket_1">
+  <inertial>
+    <origin xyz="0.001632 -0.123214 0.037475" rpy="0 0 0"/>
+    <mass value="2.1376034633898464"/>
+    <inertia ixx="0.005846" iyy="0.004627" izz="0.007945" ixy="0.000191" iyz="-7.8e-05" ixz="1.2e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.101349 0.513179 -0.352900" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/Bucket_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.101349 0.513179 -0.352900" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="file://$(find Excavator_Final_description)/meshes/Bucket_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<joint name="Revolute 4" type="continuous">
   <origin xyz="0.0 0.0375 0.0125" rpy="0 0 0"/>
   <parent link="base_link"/>
-  <child link="base_joint_1"/>
-  <axis xyz="0.0 -0.0 1.0"/>
-  <limit upper="3.141593" lower="0.0" effort="100" velocity="100"/>
+  <child link="base_joint_1_1"/>
+  <axis xyz="0.0 0.0 1.0"/>
 </joint>
 
-<joint name="Revolute 2" type="revolute">
-  <origin xyz="-0.03 0.0 0.094686" rpy="0 0 0"/>
-  <parent link="base_joint_1"/>
-  <child link="arm_1"/>
-  <axis xyz="-1.0 0.0 0.0"/>
-  <limit upper="0.959931" lower="0.0" effort="100" velocity="100"/>
+<joint name="Revolute 5" type="continuous">
+  <origin xyz="-0.029656 -0.004532 0.094686" rpy="0 0 0"/>
+  <parent link="base_joint_1_1"/>
+  <child link="arm_1_1"/>
+  <axis xyz="-0.988524 -0.151061 0.0"/>
+</joint>
+
+<joint name="Revolute 6" type="continuous">
+  <origin xyz="0.068603 -0.362870 0.251014" rpy="0 0 0"/>
+  <parent link="arm_1_1"/>
+  <child link="Pole_1"/>
+  <axis xyz="0.988524 0.151061 -0.0"/>
+</joint>
+
+<joint name="Revolute 7" type="continuous">
+  <origin xyz="0.062402 -0.183277 -0.005300" rpy="0 0 0"/>
+  <parent link="Pole_1"/>
+  <child link="Bucket_1"/>
+  <axis xyz="0.988524 0.151061 -0.0"/>
 </joint>
 
 </robot>
