@@ -9,7 +9,6 @@ A four-joint excavator model, exported from CAD as a ROS 2 URDF package, importe
 Click an STL file below to rotate and zoom it in GitHub's 3D viewer.
 
 - **Full excavator (CAD export):** [`Excavator_Final.stl`](Excavator_Final.stl)
-- **Full excavator (built from the URDF parts):** [`docs/excavator.stl`](docs/excavator.stl), all links assembled at the zero joint pose
 - **Parts:** [base](Excavator_Final_description/meshes/base_link.stl) · [cab](Excavator_Final_description/meshes/base_joint_1_1.stl) · [arm](Excavator_Final_description/meshes/arm_1_1.stl) · [pole](Excavator_Final_description/meshes/Pole_1.stl) · [bucket](Excavator_Final_description/meshes/Bucket_1.stl)
 
 ## Robot
@@ -29,6 +28,7 @@ All joints are `continuous` in the CAD export (no limits). The ranges above are 
 
 ```
 .
+├── Excavator_Final.stl               # Full excavator exported from CAD (mm)
 ├── Excavator_Final_description/      # ROS 2 description package
 │   ├── urdf/
 │   │   ├── Excavator_Final.urdf      # Flattened URDF imported into Isaac Sim (renamed joints, relative mesh paths)
@@ -40,7 +40,6 @@ All joints are `continuous` in the CAD export (no limits). The ranges above are 
 │   ├── launch/                       # RViz / Gazebo launch files
 │   └── config/
 ├── docs/
-│   ├── excavator.stl                 # All parts assembled into one mesh (for viewing)
 │   └── excavator.png                 # Preview image used above
 └── scripts/
     ├── import_urdf.py                # Headless URDF -> USD import
@@ -48,7 +47,7 @@ All joints are `continuous` in the CAD export (no limits). The ranges above are 
     ├── excavator_keyboard.py         # Drive the joints with the keyboard
     ├── run_live.py                   # Starts the sim and hot-reloads live_controller.py
     ├── live_controller.py            # Control logic you edit while the sim runs
-    └── make_preview.py               # Rebuilds docs/excavator.stl and docs/excavator.png
+    └── make_preview.py               # Renders docs/excavator.png from Excavator_Final.stl
 ```
 
 ## Requirements
@@ -138,9 +137,9 @@ Each joint moves at 0.5 rad/s (about 29°/s) while its key is held. Commands are
 
 In `live_controller.py`, set `MODE = "keyboard"` for the keyboard controls above or `MODE = "sweep"` for the automatic motion. Gains (`KP`, `KD`), key bindings, speed and sweep ranges are set in the same file. Only changes to `run_live.py` itself, which sets up the scene, need a restart.
 
-### Regenerating the 3D preview
+### Regenerating the preview image
 
-After changing the meshes or `Excavator_Final.urdf`, rebuild `docs/excavator.stl` and `docs/excavator.png`. This runs with the system Python (needs numpy, matplotlib and Pillow), not Isaac Sim:
+After replacing `Excavator_Final.stl`, re-render `docs/excavator.png`. This runs with the system Python (needs numpy, matplotlib and Pillow), not Isaac Sim:
 
 ```bash
 python3 scripts/make_preview.py
