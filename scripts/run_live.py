@@ -6,7 +6,8 @@ Run with:
 Then, while it runs:
 - save live_controller.py -> control logic reloads within ~0.5 s;
 - save rocks.py -> rocks and dump bin are rebuilt and the pile re-poured
-  (a second or two), the excavator keeps its pose.
+  (a second or two), the excavator keeps its pose. (Switching PILE_STYLE to or
+  from "pit" moves the ground plane, which needs a restart.)
 Only changes to *this* file or a re-imported robot USD need a restart.
 Click inside the viewport first so keyboard input reaches the sim.
 """
@@ -46,12 +47,35 @@ if not os.path.isfile(USD_PATH):
         "(Fixed base, Position drive)."
     )
 
+
+def load_module(path, name):
+    """Run a file fresh (picking up edits); returns None (and prints why) on error.
+
+    Compiles the source directly instead of importing: Isaac Sim's Python can keep
+    serving the stale cached bytecode from startup, silently ignoring edits."""
+    module = types.ModuleType(name)
+    module.__file__ = path
+    try:
+        with open(path) as f:
+            code = compile(f.read(), path, "exec")
+        exec(code, module.__dict__)
+    except Exception:
+        traceback.print_exc()
+        return None
+    return module
+
+
+# rocks.py may sink a pit into a dirt slab at ground level, with the real ground
+# plane lowered beneath it; read where once (changing it needs a restart).
+_rocks_cfg = load_module(ROCKS_PATH, "rocks")
+GROUND_PLANE_Z = float(getattr(_rocks_cfg, "GROUND_PLANE_Z", 0.0))
+
 world = World(stage_units_in_meters=1.0)
 # A handful of bodies runs fastest on the CPU solver (GPU dynamics only pays off
 # with thousands). Fabric keeps physics results out of USD, so updates are cheap.
 world.get_physics_context().enable_fabric(True)
 
-world.scene.add_default_ground_plane(static_friction=0.8, dynamic_friction=0.7)
+world.scene.add_default_ground_plane(z_position=GROUND_PLANE_Z, static_friction=0.8, dynamic_friction=0.7)
 add_reference_to_stage(usd_path=USD_PATH, prim_path=PRIM_PATH)
 
 excavator = world.scene.add(SingleArticulation(prim_path=PRIM_PATH, name="excavator"))
@@ -75,23 +99,6 @@ def on_keyboard_event(event, *args):
 input_iface = carb.input.acquire_input_interface()
 keyboard = omni.appwindow.get_default_app_window().get_keyboard()
 keyboard_sub = input_iface.subscribe_to_keyboard_events(keyboard, on_keyboard_event)
-
-
-def load_module(path, name):
-    """Run a file fresh (picking up edits); returns None (and prints why) on error.
-
-    Compiles the source directly instead of importing: Isaac Sim's Python can keep
-    serving the stale cached bytecode from startup, silently ignoring edits."""
-    module = types.ModuleType(name)
-    module.__file__ = path
-    try:
-        with open(path) as f:
-            code = compile(f.read(), path, "exec")
-        exec(code, module.__dict__)
-    except Exception:
-        traceback.print_exc()
-        return None
-    return module
 
 
 def apply_gains(mod):
@@ -165,6 +172,15 @@ ctx = SimpleNamespace(
 
 module = load_controller()
 print(f"Loaded {CONTROLLER_PATH}" if module else "Controller failed to load; fix and save.")
+# Start in the controller's HOME pose (the rocks are poured with the arm there).
+try:
+    home = module.home_pose() if module and hasattr(module, "home_pose") else None
+except Exception:
+    traceback.print_exc()
+    home = None
+if home:
+    for name, angle in home.items():
+        ctx.targets[ctx.idx[name]] = angle
 rebuild_rocks()
 step_failed = False
 

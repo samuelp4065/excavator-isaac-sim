@@ -41,13 +41,15 @@ if not os.path.isfile(USD_PATH):
 
 K = carb.input.KeyboardInput
 # All joints are 'continuous' in the URDF, so these clamps (radians) are the only
-# bound on motion. Kept wide on purpose so you can explore; tighten once you know.
+# bound on motion.
 JOINT_KEYS = {
     # name:          (key +,   key -,  lo,     hi)
     "swing_joint":  (K.LEFT,  K.RIGHT, -np.pi, np.pi),
-    "arm_joint":    (K.Q,     K.A,     -np.pi, np.pi),
-    "pole_joint":   (K.W,     K.S,     -np.pi, np.pi),
-    "bucket_joint": (K.E,     K.D,     -np.pi, np.pi),
+    # Collision-free ranges (kinematics.JOINT_LIMITS): beyond them a link swings
+    # through its neighbour, since the sim doesn't collide neighbouring links.
+    "arm_joint":    (K.Q,     K.A,     np.radians(-50), np.radians(110)),
+    "pole_joint":   (K.W,     K.S,     np.radians(-5),  np.radians(130)),
+    "bucket_joint": (K.E,     K.D,     np.radians(-8),  np.radians(278)),  # hits the stick at -80..-10 deg
 }
 RESET_KEY = K.R
 SPEED = 0.5  # rad/s while a key is held (~29 deg/s)

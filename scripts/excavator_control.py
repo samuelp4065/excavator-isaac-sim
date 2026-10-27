@@ -35,8 +35,8 @@ JOINT_MOTION = {
     # name:          (lo,    hi,   freq)
     "swing_joint":  (0.0,   np.pi, 0.3),
     "arm_joint":    (0.0,   0.8,   0.5),
-    "pole_joint":   (-0.4,  0.4,   0.7),
-    "bucket_joint": (-0.5,  0.5,   0.9),
+    "pole_joint":   (0.0,   0.8,   0.7),  # stay inside the collision-free ranges
+    "bucket_joint": (0.0,   1.0,   0.9),  # (negative bucket angles go through the stick)
 }
 
 world = World(stage_units_in_meters=1.0)
